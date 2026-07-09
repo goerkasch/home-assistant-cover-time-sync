@@ -1,7 +1,7 @@
 {
   "domain": "cover_time_sync",
   "name": "Cover Time Sync",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "documentation": "https://github.com/goerkasch/home-assistant-cover-time-sync",
   "issue_tracker": "https://github.com/goerkasch/home-assistant-cover-time-sync/issues",
   "requirements": [],
