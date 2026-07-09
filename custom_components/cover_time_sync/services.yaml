@@ -1,30 +1,42 @@
-send_command:
-  description: Send device command through Cover.
-  fields:
-    command: {description: The command to be sent., example: 'open_cover'}
-    device_id: {description: device ID.}
 set_known_position:
-  description: Set position aquired outside of this component without triggering action
+  description: Set a cover position acquired outside of this integration without triggering movement.
   fields:
     entity_id:
-      description: entity id of cover to set position for
+      description: Entity ID of the cover to update.
       example: cover.garage_door
     position:
-      description: position of cover, between 0 and 100
+      description: Position of the cover, between 0 and 100.
       example: 50
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: slider
     confident:
-      description: optional (default is false) - if we are confident in this position, i.e. affects if state is assumed or not. To be used for example with a contact sensor confirming that the position was really reached.
-      example: True
+      description: Whether the supplied position is confirmed and should not be treated as assumed.
+      example: true
+      selector:
+        boolean:
     position_type:
-      description: optional (default is target) - specifies if the position we are passing in is the target or the current position. Defaults to target meaning we will transition slider from current posution to given target. Specifiying current will set to the current position immediately.
+      description: Whether the supplied position is the target position or the current position.
       example: current
+      selector:
+        select:
+          options:
+            - target
+            - current
 set_known_action:
-  description: Action of open, stop or close captured outside of HA, trigger cover response in HA without triggering action
+  description: Set an open, close, or stop action captured outside of Home Assistant without triggering movement.
   fields:
     entity_id:
-      description: entity id of cover to set position for
+      description: Entity ID of the cover to update.
       example: cover.garage_door
     action:
-      description: must be one of open, close or stop
+      description: Action captured outside of Home Assistant.
       example: open
-
+      selector:
+        select:
+          options:
+            - open
+            - close
+            - stop

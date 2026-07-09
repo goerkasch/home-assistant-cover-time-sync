@@ -7,12 +7,13 @@ from datetime import timedelta
 
 from homeassistant.core import callback
 from homeassistant.helpers import entity_platform
-from homeassistant.helpers.event import async_track_utc_time_change, async_track_time_interval
+from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.components.cover import (
     ATTR_CURRENT_POSITION,
     ATTR_POSITION,
     PLATFORM_SCHEMA,
     CoverEntity,
+    CoverEntityFeature,
 )
 from homeassistant.const import (
     CONF_NAME,
@@ -72,9 +73,11 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 POSITION_SCHEMA = cv.make_entity_service_schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
-        vol.Required(ATTR_POSITION): cv.positive_int,
+        vol.Required(ATTR_POSITION): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
         vol.Optional(ATTR_CONFIDENT, default=False): cv.boolean,
-        vol.Optional(ATTR_POSITION_TYPE, default=ATTR_POSITION_TYPE_TARGET): cv.string
+        vol.Optional(ATTR_POSITION_TYPE, default=ATTR_POSITION_TYPE_TARGET): vol.In(
+            [ATTR_POSITION_TYPE_TARGET, ATTR_POSITION_TYPE_CURRENT]
+        )
     }
 )
 
@@ -82,7 +85,7 @@ POSITION_SCHEMA = cv.make_entity_service_schema(
 ACTION_SCHEMA = cv.make_entity_service_schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
-        vol.Required(ATTR_ACTION): cv.string
+        vol.Required(ATTR_ACTION): vol.In(["open", "close", "stop"])
     }
 )
 
@@ -137,10 +140,16 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         self._processing_known_position = False
         self._unique_id = device_id
 
-        if name:
-            self._name = name
-        else:
-            self._name = device_id
+        self._name = name or device_id
+        self._attr_name = self._name
+        self._attr_unique_id = "cover_time_sync_uuid_" + self._unique_id
+        self._attr_should_poll = False
+        self._attr_supported_features = (
+            CoverEntityFeature.OPEN
+            | CoverEntityFeature.CLOSE
+            | CoverEntityFeature.STOP
+            | CoverEntityFeature.SET_POSITION
+        )
 
         self._unsubscribe_auto_updater = None
 
@@ -203,7 +212,9 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
     async def async_added_to_hass(self):
         """ Only cover position and confidence in that matters."""
         """ The rest is calculated from this attribute.        """
-        self.hass.bus.async_listen("state_changed", self._handle_state_changed)
+        self.async_on_remove(
+            self.hass.bus.async_listen("state_changed", self._handle_state_changed)
+        )
         old_state = await self.async_get_last_state()
         _LOGGER.debug(self._name + ': ' + 'async_added_to_hass :: oldState %s', old_state)
         if (old_state is not None and self.tc is not None and old_state.attributes.get(ATTR_CURRENT_POSITION) is not None):
@@ -238,7 +249,7 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         return "cover_time_sync_uuid_" + self._unique_id
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the device state attributes."""
         attr = {}
         if self._travel_time_down is not None:
@@ -351,8 +362,6 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
     async def set_known_action(self, **kwargs):
         """We want to do a few things when we get a position"""
         action = kwargs[ATTR_ACTION]
-        if action not in ["open","close","stop"]:
-          raise ValueError("action must be one of open, close or cover.")
         if action == "stop":
           self._handle_my_button()
           return
@@ -369,8 +378,6 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         position = kwargs[ATTR_POSITION]
         confident = kwargs[ATTR_CONFIDENT] if ATTR_CONFIDENT in kwargs else False
         position_type = kwargs[ATTR_POSITION_TYPE] if ATTR_POSITION_TYPE in kwargs else ATTR_POSITION_TYPE_TARGET
-        if position_type not in [ATTR_POSITION_TYPE_TARGET, ATTR_POSITION_TYPE_CURRENT]:
-          raise ValueError(ATTR_POSITION_TYPE + " must be one of %s, %s", ATTR_POSITION_TYPE_TARGET,ATTR_POSITION_TYPE_CURRENT)
         _LOGGER.debug(self._name + ': ' + 'set_known_position :: position  %d, confident %s, position_type %s, self.tc.is_traveling%s', position, str(confident), position_type, str(self.tc.is_traveling()))
         self._assume_uncertain_position = not confident 
         self._processing_known_position = True
