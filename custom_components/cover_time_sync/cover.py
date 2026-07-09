@@ -1,4 +1,4 @@
-"""Cover Time based, Synced version."""
+"""Cover Time Sync."""
 import logging
 
 import voluptuous as vol
@@ -87,7 +87,7 @@ ACTION_SCHEMA = cv.make_entity_service_schema(
 )
 
 
-DOMAIN = "cover_time_based_synced"
+DOMAIN = "cover_time_sync"
 
 def devices_from_config(domain_config):
     """Parse configuration and add cover devices."""
@@ -235,7 +235,7 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
     @property
     def unique_id(self):
         """Return the unique id."""
-        return "cover_timebased_synced_uuid_" + self._unique_id
+        return "cover_time_sync_uuid_" + self._unique_id
 
     @property
     def device_state_attributes(self):

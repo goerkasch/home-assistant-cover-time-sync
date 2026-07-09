@@ -1,8 +1,8 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-blue.svg?style=for-the-badge)](https://www.hacs.xyz/docs/faq/custom_repositories/)
 
-# Cover Time Based Component Synced version
+# Cover Time Sync
 
-Cover Time Based Component for your [Home-Assistant](http://www.home-assistant.io) based on [davidramosweb's Cover Time Based Component](https://github.com/davidramosweb/home-assistant-custom-components-cover-time-based) and [nagyrobi's Cover RF Time based](https://github.com/nagyrobi/home-assistant-custom-components-cover-rf-time-based/),
+Cover Time Sync for your [Home-Assistant](http://www.home-assistant.io) based on [davidramosweb's Cover Time Based Component](https://github.com/davidramosweb/home-assistant-custom-components-cover-time-based) and [nagyrobi's Cover RF Time based](https://github.com/nagyrobi/home-assistant-custom-components-cover-rf-time-based/),
 modified to sync state of cover with the state of switches.
 
 This fork is maintained at [goerkasch/home-assistant-custom-components-cover-time-based-synced](https://github.com/goerkasch/home-assistant-custom-components-cover-time-based-synced).
@@ -30,7 +30,7 @@ https://github.com/goerkasch/home-assistant-custom-components-cover-time-based-s
 ### Example configuration.yaml entry
 ```yaml
 cover:
-  - platform: cover_time_based_synced
+  - platform: cover_time_sync
     devices:
       my_room_cover_time_based:
         name: My Room Cover
