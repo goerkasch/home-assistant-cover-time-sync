@@ -69,7 +69,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
-POSITION_SCHEMA = vol.Schema(
+POSITION_SCHEMA = cv.make_entity_service_schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
         vol.Required(ATTR_POSITION): cv.positive_int,
@@ -79,7 +79,7 @@ POSITION_SCHEMA = vol.Schema(
 )
 
 
-ACTION_SCHEMA = vol.Schema(
+ACTION_SCHEMA = cv.make_entity_service_schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
         vol.Required(ATTR_ACTION): cv.string
@@ -112,11 +112,15 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     platform = entity_platform.current_platform.get()
 
     platform.async_register_entity_service(
-        SERVICE_SET_KNOWN_POSITION, POSITION_SCHEMA, "set_known_position"
+        SERVICE_SET_KNOWN_POSITION,
+        POSITION_SCHEMA,
+        "set_known_position"
     )
 
     platform.async_register_entity_service(
-        SERVICE_SET_KNOWN_ACTION, ACTION_SCHEMA, "set_known_action"
+        SERVICE_SET_KNOWN_ACTION,
+        ACTION_SCHEMA,
+        "set_known_action"
     )
 
 
