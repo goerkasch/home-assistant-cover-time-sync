@@ -38,6 +38,7 @@ CONF_TRAVELLING_TIME_UP = 'travelling_time_up'
 CONF_SEND_STOP_AT_ENDS = 'send_stop_at_ends'
 DEFAULT_TRAVEL_TIME = 25
 DEFAULT_SEND_STOP_AT_ENDS = False
+POSITION_VALIDATOR = vol.All(vol.Coerce(int), vol.Range(min=0, max=100))
 
 CONF_OPEN_SWITCH_ENTITY_ID = 'open_switch_entity_id'
 CONF_CLOSE_SWITCH_ENTITY_ID = 'close_switch_entity_id'
@@ -72,7 +73,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 POSITION_SCHEMA = cv.make_entity_service_schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
-        vol.Required(ATTR_POSITION): cv.positive_int,
+        vol.Required(ATTR_POSITION): POSITION_VALIDATOR,
         vol.Optional(ATTR_CONFIDENT, default=False): cv.boolean,
         vol.Optional(ATTR_POSITION_TYPE, default=ATTR_POSITION_TYPE_TARGET): cv.string
     }
@@ -133,7 +134,7 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
         self._close_switch_entity_id = close_switch_entity_id
         self._send_stop_at_ends = send_stop_at_ends
         self._assume_uncertain_position = True 
-        self._target_position = 0
+        self._target_position = None
         self._processing_known_position = False
         self._unique_id = device_id
 
@@ -181,7 +182,7 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
             if event.data.get("entity_id") == self._open_switch_entity_id:
                 await self.hass.services.async_call("homeassistant", "turn_off", {"entity_id": self._close_switch_entity_id}, False)
         elif self._switch_open_state == "on" and self._switch_close_state == "off":
-            if self._target_position != 100 and self._target_position != 0:
+            if self._target_position is not None and self._target_position != 100 and self._target_position != 0:
                 _LOGGER.debug(self._name + ': ' + 'open/close: on/off, opening to %d', self._target_position)
                 self.tc.start_travel(self._target_position)
             else:
@@ -190,7 +191,7 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
                 self.tc.start_travel_up()
             self.start_auto_updater()
         elif self._switch_open_state == "off" and self._switch_close_state == "on":
-            if self._target_position != 100 and self._target_position != 0:
+            if self._target_position is not None and self._target_position != 100 and self._target_position != 0:
                 _LOGGER.debug(self._name + ': ' + 'open/close: on/off, closing to %d', self._target_position)
                 self.tc.start_travel(self._target_position)
             else:
@@ -339,7 +340,7 @@ class CoverTimeBased(CoverEntity, RestoreEntity):
     def stop_auto_updater(self):
         """Stop the autoupdater."""
         _LOGGER.debug(self._name + ': ' + 'stop_auto_updater')
-        self._target_position = 0
+        self._target_position = None
         if self._unsubscribe_auto_updater is not None:
             self._unsubscribe_auto_updater()
             self._unsubscribe_auto_updater = None
